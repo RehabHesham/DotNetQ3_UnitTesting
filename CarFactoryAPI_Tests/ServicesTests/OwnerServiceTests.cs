@@ -121,6 +121,64 @@ namespace CarFactoryAPI_Tests.ServicesTests
             Assert.Contains("sold", result);
         }
 
+        [Fact]
+        [Trait("Author", "Mohamed Kamal")]
+        public void BuyCar_OwnerWithCar_AlreadyHaveCar()
+        {
+            // Arrange
+            Car car = new Car() { Id = 5, VIN = "454564", Price = 1000, Velocity = 100, Type = CarType.BMW, OwnerId = 5, Owner = new Owner() { Id = 5 } };
+            Owner owner = new Owner() { Id = 5, Name = "Ali", Car = new Car() { Id = 5 } };
+            BuyCarInput buyCarInput = new() { CarId = 5, OwnerId = 5, Amount = 1000 };
+
+            carRepoMock.Setup(c => c.GetCarById(5)).Returns(car);
+            ownerRepoMock.Setup(o => o.GetOwnerById(5)).Returns(owner);
+
+            // Act
+            string result = ownersService.BuyCar(buyCarInput);
+
+            // Assert
+            Assert.Contains("Already", result, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        [Trait("Author", "Mohamed Kamal")]
+        public void BuyCar_InputAmountLessThanPrice_InsufficientFunds()
+        {
+            // Arrange
+            var car = new Car() {Price = 1000};
+            var owner = new Owner();
+            var buyCarInput = new BuyCarInput() {Amount = 500};
+
+            carRepoMock.Setup(c => c.GetCarById(It.IsAny<int>())).Returns(car);
+            ownerRepoMock.Setup(o => o.GetOwnerById(It.IsAny<int>())).Returns(owner);
+
+            // Act
+            var result = ownersService.BuyCar(buyCarInput);
+
+            // Assert
+            Assert.Contains("Insufficient", result, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        [Trait("Author", "Mohamed Kamal")]
+        public void BuyCar_AssignToOwnerFailed_SomethingWentWrong()
+        {
+            // Arrange
+            var car = new Car();
+            var owner = new Owner();
+            var buyCarInput = new BuyCarInput();
+
+            carRepoMock.Setup(c => c.GetCarById(It.IsAny<int>())).Returns(car);
+            ownerRepoMock.Setup(o => o.GetOwnerById(It.IsAny<int>())).Returns(owner);
+            carRepoMock.Setup(c => c.AssignToOwner(It.IsAny<int>(), It.IsAny<int>())).Returns(false);
+
+            // Act
+            var result = ownersService.BuyCar(buyCarInput);
+
+            // Assert
+            Assert.Contains("wrong", result, StringComparison.OrdinalIgnoreCase);
+        }
+
         public void Dispose()
         {
             helper.WriteLine("test clean up");
